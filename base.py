@@ -1,0 +1,45 @@
+import customtkinter as ctk
+from tkinter import filedialog
+from PIL import Image
+def selfol():
+    global sfolder
+    folder=filedialog.askdirectory()
+    if folder:
+        sfolder=folder
+root=ctk.CTk()
+root.geometry("800x500")
+root.resizable(False,False)
+root.title("Test Window")
+root.configure(fg_color="#241B2F")
+ctk.set_appearance_mode('dark')
+frame=ctk.CTkFrame(root,width=700,height=180,corner_radius=15,fg_color="#342842")
+frame.place(x=50,y=290)
+btn1=ctk.CTkButton(frame,text="select folder",corner_radius=32,height=30, width=50,fg_color="#6C4BA6",command=selfol)
+btn2=ctk.CTkButton(frame,text="simulate test",corner_radius=32,height=30, width=50,fg_color="#6C4BA6")
+btn1.place(x=60, y=95, anchor='center')
+btn2.place(x=60, y=50, anchor='center')
+img= Image.open('picon.jpg')
+btn3=ctk.CTkButton(root,text="",corner_radius=32,image=ctk.CTkImage(img),height=5, width=5,fg_color='transparent')
+btn3.place(x=780, y=20, anchor='center')
+lable=ctk.CTkLabel(root,text="Profile",fg_color='transparent')
+lable.place(x=779, y=44, anchor='center')
+switch=ctk.CTkSwitch(frame,text='scanner')
+switch.place(x=350,y=110, anchor='center',)
+switch.select()
+slider=ctk.CTkSlider(frame,from_=0,to=100,number_of_steps=10)
+slider.place(x=250,y=30)
+btn4=ctk.CTkButton(frame,text="Scan History",corner_radius=32,height=30, width=50,fg_color="#6C4BA6")
+btn4.place(x=60, y=140, anchor='center')
+lable2=ctk.CTkLabel(frame,text="Sensitivity")
+lable2.place(x=350,y=70,anchor='center')
+entry=ctk.CTkScrollableFrame(root,height=20,width=300,fg_color="#1A1024")
+entry.place(x=50,y=30)
+frame2=ctk.CTkFrame(frame,width=150,height=180,fg_color="#1A1024",corner_radius=15)
+frame2.place(x=545)
+lable3=ctk.CTkLabel(frame2,text="STATUS:")
+lable3.place(x=50,y=10)
+img2=Image.open('safe.png')
+lable4=ctk.CTkLabel(root,text='',image=ctk.CTkImage(img2,size=(200,200)),fg_color='transparent')
+lable4.place(x=597,y=130,anchor='center')
+root.mainloop()
+sfolder=None
