@@ -7,9 +7,9 @@ timestamps = []
 file_entropies = {}
 
 window_seconds = 30
+
 def process_event(file, event_type):
     global timestamps
-
     t = time.time()
     cutoff = t - window_seconds
     timestamps.append(t)
@@ -38,11 +38,9 @@ def get_rate(timestamps):
     N = len(timestamps)
     T = 20
     if N > T:
-        print("Rate Check Failed")
         flag1 = 1
         return flag1
     else:
-        print("Rate Check Passed") 
         flag1 = 0
         return flag1
 
@@ -69,13 +67,13 @@ def analyze_entropy(file):
         E = -E
 
         old_E = file_entropies.get(file, None)
+        
         if old_E == None:
             file_entropies[file] = E
             if (E > 7.6) and file.lower().endswith(SAFE_EXTENSIONS_TUPLE):
                 flag2 = 0
             else:
-                flag2 = 1 
-                
+                flag2 = 1         
         else:
             delta_H = E - old_E
             if delta_H > 1.5:
