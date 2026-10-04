@@ -8,7 +8,7 @@ file_entropies = {}
 
 window_seconds = 30
 
-def process_event(file, event_type):
+def process_event(file):
     global timestamps
     t = time.time()
     cutoff = t - window_seconds
