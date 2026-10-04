@@ -70,7 +70,7 @@ def analyze_entropy(file):
         
         if old_E == None:
             file_entropies[file] = E
-            if (E > 7.6) and file.lower().endswith(SAFE_EXTENSIONS_TUPLE):
+            if (E > 7.0) and file.lower().endswith(SAFE_EXTENSIONS_TUPLE):
                 flag2 = 0
             else:
                 flag2 = 1         
