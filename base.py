@@ -2,12 +2,16 @@ import customtkinter as ctk
 from tkinter import filedialog
 from PIL import Image
 import shared
+import watcher
 sfolder = None
+observer=None
 def selfol():
-    global sfolder
+    global sfolder,observer
     folder=filedialog.askdirectory()
     if folder:
         sfolder=folder
+        watcher.stop_watcher(observer)
+        observer=watcher.start_watcher(folder)
 root=ctk.CTk()
 root.geometry("800x500")
 root.resizable(False,False)
@@ -50,5 +54,10 @@ def check_queue():
         file, state = shared.events.get()
         lable3.configure(text=f"STATUS: \n{state}")
     root.after(100, check_queue)
+def on_close():
+    global observer
+    watcher.stop_watcher(observer)
+    root.destroy()
+root.protocol("WM_DELETE_WINDOW",on_close)
 check_queue() 
 root.mainloop()
