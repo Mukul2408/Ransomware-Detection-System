@@ -1,6 +1,8 @@
 import customtkinter as ctk
 from tkinter import filedialog
 from PIL import Image
+import shared
+sfolder = None
 def selfol():
     global sfolder
     folder=filedialog.askdirectory()
@@ -15,7 +17,9 @@ ctk.set_appearance_mode('dark')
 frame=ctk.CTkFrame(root,width=700,height=180,corner_radius=15,fg_color="#342842")
 frame.place(x=50,y=290)
 btn1=ctk.CTkButton(frame,text="select folder",corner_radius=32,height=30, width=50,fg_color="#6C4BA6",command=selfol)
-btn2=ctk.CTkButton(frame,text="simulate test",corner_radius=32,height=30, width=50,fg_color="#6C4BA6")
+def fake_event():
+    shared.events.put(("test.txt","Suspicious"))
+btn2=ctk.CTkButton(frame,text="simulate test",corner_radius=32,height=30, width=50,fg_color="#6C4BA6",command=fake_event)
 btn1.place(x=60, y=95, anchor='center')
 btn2.place(x=60, y=50, anchor='center')
 img= Image.open('picon.jpg')
@@ -37,9 +41,14 @@ entry.place(x=50,y=30)
 frame2=ctk.CTkFrame(frame,width=150,height=180,fg_color="#1A1024",corner_radius=15)
 frame2.place(x=545)
 lable3=ctk.CTkLabel(frame2,text="STATUS:")
-lable3.place(x=50,y=10)
+lable3.place(relx=0.5,y=30,anchor='center')
 img2=Image.open('safe.png')
 lable4=ctk.CTkLabel(root,text='',image=ctk.CTkImage(img2,size=(200,200)),fg_color='transparent')
 lable4.place(x=597,y=130,anchor='center')
+def check_queue():
+    while not shared.events.empty():
+        file, state = shared.events.get()
+        lable3.configure(text=f"STATUS: \n{state}")
+    root.after(100, check_queue)
+check_queue() 
 root.mainloop()
-sfolder=None
