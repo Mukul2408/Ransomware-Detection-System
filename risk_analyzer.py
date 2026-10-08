@@ -4,15 +4,16 @@ from collections import Counter
 
 SAFE_EXTENSIONS_TUPLE = (".zip", ".gz", ".png", ".jpg", ".pdf")
 timestamps = []
-file_entropies = {}
+file_entropies = {}                 # Baseline memory
 
-window_seconds = 30
+window_seconds = 30                 # Time window used to detect bursts of file activity
 
 def process_event(file):
     global timestamps
     t = time.time()
     cutoff = t - window_seconds
     timestamps.append(t)
+    # Rebuild the list keeping only events inside the window
     new_list = []
     for times in timestamps:
         if times > cutoff:
@@ -21,7 +22,8 @@ def process_event(file):
 
     rate = get_rate(timestamps)
     entropy = analyze_entropy(file) 
-
+    
+    # Each signal is 0 or 1, so the total is 0, 1 or 2
     Risk_Score = rate + entropy
 
     if Risk_Score == 0:
@@ -35,8 +37,8 @@ def process_event(file):
 
 
 def get_rate(timestamps):
-    N = len(timestamps)
-    T = 20
+    N = len(timestamps)                         # number of events in the last 30 seconds
+    T = 20                                      # threshold: more than 20 events = burst (typical of ransomware)
     if N > T:
         flag1 = 1
         return flag1
@@ -46,12 +48,14 @@ def get_rate(timestamps):
 
 
 def analyze_entropy(file):
+    # If the file is missing or locked, skip it so one bad file doesn't crash the monitor
     try:
         with open(file, "rb") as f:
                 data = f.read()
     except (FileNotFoundError, PermissionError):
         return 0 
-      
+        
+    # An empty file has no content to measure, so treat it as safe
     if len(data) == 0:
         E = 0
         flag2 = 0
