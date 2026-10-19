@@ -1,8 +1,14 @@
-import customtkinter as ctk
 from tkinter import filedialog
+
+import customtkinter as ctk
 from PIL import Image
+
 import shared
 import watcher
+import simulator
+import threading
+import time
+
 sfolder = None
 observer=None
 def selfol():
@@ -23,7 +29,19 @@ frame.place(x=50,y=290)
 btn1=ctk.CTkButton(frame,text="select folder",corner_radius=32,height=30, width=50,fg_color="#6C4BA6",command=selfol)
 def fake_event():
     shared.events.put(("test.txt","Suspicious"))
-btn2=ctk.CTkButton(frame,text="simulate test",corner_radius=32,height=30, width=50,fg_color="#6C4BA6",command=fake_event)
+
+def run_demo():
+    global observer
+    simulator.setup()
+    watcher.stop_watcher(observer)
+    observer= watcher.start_watcher(simulator.TEST_DIR)
+    time.sleep(2)
+    simulator.attack()
+
+def start_simulation():
+    threading.Thread(target=run_demo, daemon=True).start()
+
+btn2=ctk.CTkButton(frame,text="simulate test",corner_radius=32,height=30, width=50,fg_color="#6C4BA6",command=start_simulation)
 btn1.place(x=60, y=95, anchor='center')
 btn2.place(x=60, y=50, anchor='center')
 img= Image.open('picon.jpg')
