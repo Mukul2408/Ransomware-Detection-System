@@ -1,14 +1,12 @@
 from tkinter import filedialog
-
 import customtkinter as ctk
 from PIL import Image
-
 import shared
 import watcher
 import simulator
 import threading
 import time
-
+import os
 sfolder = None
 observer=None
 def selfol():
@@ -27,9 +25,6 @@ ctk.set_appearance_mode('dark')
 frame=ctk.CTkFrame(root,width=700,height=180,corner_radius=15,fg_color="#342842")
 frame.place(x=50,y=290)
 btn1=ctk.CTkButton(frame,text="select folder",corner_radius=32,height=30, width=50,fg_color="#6C4BA6",command=selfol)
-def fake_event():
-    shared.events.put(("test.txt","Suspicious"))
-
 def run_demo():
     global observer
     simulator.setup()
@@ -37,7 +32,6 @@ def run_demo():
     observer= watcher.start_watcher(simulator.TEST_DIR)
     time.sleep(2)
     simulator.attack()
-
 def start_simulation():
     threading.Thread(target=run_demo, daemon=True).start()
 
@@ -58,7 +52,7 @@ btn4=ctk.CTkButton(frame,text="Scan History",corner_radius=32,height=30, width=5
 btn4.place(x=60, y=140, anchor='center')
 lable2=ctk.CTkLabel(frame,text="Sensitivity")
 lable2.place(x=350,y=70,anchor='center')
-entry=ctk.CTkScrollableFrame(root,height=20,width=300,fg_color="#1A1024")
+entry=ctk.CTkScrollableFrame(root,height=20,width=420,fg_color="#1A1024")
 entry.place(x=50,y=30)
 frame2=ctk.CTkFrame(frame,width=150,height=180,fg_color="#1A1024",corner_radius=15)
 frame2.place(x=545)
@@ -69,8 +63,13 @@ lable4=ctk.CTkLabel(root,text='',image=ctk.CTkImage(img2,size=(200,200)),fg_colo
 lable4.place(x=597,y=130,anchor='center')
 def check_queue():
     while not shared.events.empty():
-        file, state = shared.events.get()
+        kind , file, state = shared.events.get()
+        message=f"<{time.strftime("%H:%M:%S")}> {kind}, {os.path.basename(file)}"
+        val=ctk.CTkLabel(entry,text=message,text_color="#FFFF00")
+        val.pack(anchor='w')
         lable3.configure(text=f"STATUS: \n{state}")
+        with open("logs.log", "a", encoding="utf-8") as f:
+            f.write(f"<{time.strftime("%H:%M:%S")}> ,{kind}, {file}\n")
     root.after(100, check_queue)
 def on_close():
     global observer

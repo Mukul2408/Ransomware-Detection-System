@@ -9,22 +9,22 @@ class Handler(FileSystemEventHandler):
         if event.is_directory:
             return 
         state=risk_analyzer.process_event(event.src_path)
-        shared.events.put((event.src_path, state))
+        shared.events.put(("File Created", event.src_path, state))
     def on_modified(self, event):
         if event.is_directory:
             return
         state=risk_analyzer.process_event(event.src_path)
-        shared.events.put((event.src_path,state))
+        shared.events.put(("File Modified", event.src_path,state))
     def on_moved(self, event):
         if event.is_directory:
             return
         state=risk_analyzer.process_event(event.dest_path)
-        shared.events.put((event.dest_path,state))
+        shared.events.put(("File Moved", event.dest_path,state))
     def on_deleted(self, event):
         if event.is_directory:
             return
         state=risk_analyzer.process_event(event.src_path)
-        shared.events.put((event.src_path,state))
+        shared.events.put(("File Deleted", event.src_path,state))
 def start_watcher(folder):
     obs=Observer()
     obs.schedule(Handler(),folder,recursive=True)
