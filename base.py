@@ -7,6 +7,7 @@ import simulator
 import threading
 import time
 import os
+import database
 sfolder = None
 observer=None
 def selfol():
@@ -26,14 +27,25 @@ frame=ctk.CTkFrame(root,width=700,height=180,corner_radius=15,fg_color="#342842"
 frame.place(x=50,y=290)
 btn1=ctk.CTkButton(frame,text="select folder",corner_radius=32,height=30, width=50,fg_color="#6C4BA6",command=selfol)
 def run_demo():
-    global observer
-    simulator.setup()
+    global observer, sfolder
+    target_folder = sfolder if sfolder else simulator.TEST_DIR
+    simulator.setup(target_folder)
     watcher.stop_watcher(observer)
-    observer= watcher.start_watcher(simulator.TEST_DIR)
+    observer= watcher.start_watcher(target_folder)
     time.sleep(2)
-    simulator.attack()
+    simulator.attack(target_folder)
 def start_simulation():
     threading.Thread(target=run_demo, daemon=True).start()
+def open_history():
+    win = ctk.CTkToplevel(root)
+    win.title("Scan History")
+    win.geometry("620x350")
+    tb = ctk.CTkTextbox(win, width = 600, height = 330)
+    tb.pack(padx = 10, pady = 10)
+
+    records = database.get_recent_events(limit = 100)
+    for f, score, status, t in records:
+        tb.insert("end", f"[{t}] {status} (Score {score}) -> {f}\n")
 
 btn2=ctk.CTkButton(frame,text="simulate test",corner_radius=32,height=30, width=50,fg_color="#6C4BA6",command=start_simulation)
 btn1.place(x=60, y=95, anchor='center')
@@ -46,12 +58,9 @@ lable.place(x=779, y=44, anchor='center')
 switch=ctk.CTkSwitch(frame,text='scanner')
 switch.place(x=350,y=110, anchor='center',)
 switch.select()
-slider=ctk.CTkSlider(frame,from_=0,to=100,number_of_steps=10)
-slider.place(x=250,y=30)
 btn4=ctk.CTkButton(frame,text="Scan History",corner_radius=32,height=30, width=50,fg_color="#6C4BA6")
 btn4.place(x=60, y=140, anchor='center')
-lable2=ctk.CTkLabel(frame,text="Sensitivity")
-lable2.place(x=350,y=70,anchor='center')
+btn4.configure(command = open_history)
 entry=ctk.CTkScrollableFrame(root,height=20,width=420,fg_color="#1A1024")
 entry.place(x=50,y=30)
 frame2=ctk.CTkFrame(frame,width=150,height=180,fg_color="#1A1024",corner_radius=15)
@@ -68,6 +77,13 @@ def check_queue():
         val=ctk.CTkLabel(entry,text=message,text_color="#FFFF00")
         val.pack(anchor='w')
         lable3.configure(text=f"STATUS: \n{state}")
+        if state == "Confirmed Threat":
+            score_val = 2
+        elif state == "Suspicious":
+            score_val = 1
+        else:
+            score_val = 0
+        database.log_event(file, score_val, state)
         with open("logs.log", "a", encoding="utf-8") as f:
             f.write(f"<{time.strftime("%H:%M:%S")}> ,{kind}, {file}\n")
     root.after(100, check_queue)

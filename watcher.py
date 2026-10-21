@@ -18,7 +18,7 @@ class Handler(FileSystemEventHandler):
     def on_moved(self, event):
         if event.is_directory:
             return
-        state=risk_analyzer.process_event(event.dest_path)
+        state=risk_analyzer.process_event(event.dest_path, prev_file = event.src_path)
         shared.events.put(("File Moved", event.dest_path,state))
     def on_deleted(self, event):
         if event.is_directory:

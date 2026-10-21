@@ -5,10 +5,10 @@ from collections import Counter
 SAFE_EXTENSIONS_TUPLE = (".zip", ".gz", ".png", ".jpg", ".pdf")
 timestamps = []
 file_entropies = {}
-
+Risk_Score = 0
 window_seconds = 30
 
-def process_event(file):
+def process_event(file, prev_file = None):
     global timestamps
     t = time.time()
     cutoff = t - window_seconds
@@ -20,7 +20,7 @@ def process_event(file):
     timestamps = new_list
 
     rate = get_rate(timestamps)
-    entropy = analyze_entropy(file) 
+    entropy = analyze_entropy(file, prev_file) 
 
     Risk_Score = rate + entropy
 
@@ -45,7 +45,7 @@ def get_rate(timestamps):
         return flag1
 
 
-def analyze_entropy(file):
+def analyze_entropy(file, prev_file = None):
     try:
         with open(file, "rb") as f:
                 data = f.read()
@@ -66,14 +66,18 @@ def analyze_entropy(file):
             E += p*log
         E = -E
 
-        old_E = file_entropies.get(file, None)
+        old_E = None
+        if prev_file and prev_file in file_entropies:
+            old_E = file_entropies.pop(prev_file)
+        else:
+            old_E = file_entropies.get(file, None)
         
         if old_E == None:
             file_entropies[file] = E
-            if (E > 7.0) and file.lower().endswith(SAFE_EXTENSIONS_TUPLE):
-                flag2 = 0
+            if (E > 7.0) and not file.lower().endswith(SAFE_EXTENSIONS_TUPLE):
+                flag2 = 1
             else:
-                flag2 = 1         
+                flag2 = 0        
         else:
             delta_H = E - old_E
             if delta_H > 1.5:

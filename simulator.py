@@ -15,28 +15,30 @@ WORDS = ["report", "invoice", "meeting", "budget", "notes", "project",
          "schedule", "summary", "client", "draft", "review", "update"]
 
 
-def _check_safe():
-    real = os.path.realpath(TEST_DIR)
-    if os.path.dirname(real) != os.path.realpath(BASE_DIR):
-        sys.exit("Refusing to run: test folder is not next to the script.")
-    if not os.path.isfile(os.path.join(real, MARKER)):
+def _check_safe(folder = None):
+    target = folder or TEST_DIR
+    if not os.path.isdir(target):
+        sys.exit(f"Refusing to run: {target} test folder is not next to the script.")
+    if not os.path.isfile(os.path.join(target, MARKER)):
         sys.exit("Refusing to run: marker file not found.")
 
 
-def _sim_file():
-    return [f for f in os.listdir(TEST_DIR) if f.startswith(PREFIX)]
+def _sim_file(folder = None):
+    target = folder or TEST_DIR
+    return [f for f in os.listdir(target) if f.startswith(PREFIX)]
 
 
-def setup():
-    os.makedirs(TEST_DIR, exist_ok=True)
-    with open(os.path.join(TEST_DIR, MARKER), "w") as m:
+def setup(folder = None):
+    target = folder or TEST_DIR
+    os.makedirs(target, exist_ok=True)
+    with open(os.path.join(target, MARKER), "w") as m:
         m.write("created by simulator.py safe to delete\n")
     for i in range(NUM_FILES):
         text = " ".join(random.choice(WORDS) for _ in range(FILE_SIZE // 6))
-        path = os.path.join(TEST_DIR, f"{PREFIX}{i:02d}.txt")
+        path = os.path.join(target, f"{PREFIX}{i:02d}.txt")
         with open(path, "w") as f:
             f.write(text[:FILE_SIZE])
-    print(f"[setup] Created {NUM_FILES} files in {TEST_DIR}")
+    print(f"[setup] Created {NUM_FILES} files in {target}")
 
 
 def _retry(action, tries=10, wait=0.2):
@@ -50,15 +52,16 @@ def _retry(action, tries=10, wait=0.2):
     return False
 
 
-def attack():
-    _check_safe()
-    files = sorted(f for f in _sim_file() if f.endswith(".txt"))
+def attack(folder = None):
+    target = folder or TEST_DIR
+    _check_safe(target)
+    files = sorted(f for f in _sim_file(target) if f.endswith(".txt"))
     if not files:
         print("[attack] No files found to attack. Run setup() first.")
         return
-    print(f"[attack] Starting attack on {len(files)} files")
+    print(f"[attack] Starting attack on {len(files)} files in {target}")
     for name in files:
-        path = os.path.join(TEST_DIR, name)
+        path = os.path.join(target, name)
 
         def scramble(path=path):
             with open(path, "wb") as f:
