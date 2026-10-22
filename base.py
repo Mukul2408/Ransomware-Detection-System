@@ -8,6 +8,7 @@ import threading
 import time
 import os
 import database
+from datetime import datetime
 sfolder = None
 observer=None
 def selfol():
@@ -39,14 +40,35 @@ def start_simulation():
 def open_history():
     win = ctk.CTkToplevel(root)
     win.title("Scan History")
-    win.geometry("620x350")
-    tb = ctk.CTkTextbox(win, width = 600, height = 330)
-    tb.pack(padx = 10, pady = 10)
+    win.geometry("640x440")
+    win.configure(fg_color = "#241B2F")
 
-    records = database.get_recent_events(limit = 100)
-    for f, score, status, t in records:
-        tb.insert("end", f"[{t}] {status} (Score {score}) -> {f}\n")
+    available_dates = database.get_dates()
+    if not available_dates:
+        available_dates = [datetime.now().strftime("%Y-%m-%d")]
 
+    top_frame = ctk.CTkFrame(win, fg_color = "transparent")
+    top_frame.pack(fill = "x", padx = 15, pady = (15, 5))
+
+    date_label = ctk.CTkLabel(top_frame, text = "Select Scan Date:", font = ctk.CTkFont(size = 14, weight = "bold"),)
+    date_label.pack(side = "left", padx = (0, 10))
+
+    tb = ctk.CTkTextbox(win, width = 610, height = 340, fg_color = "#1A1024", text_color = "#FFFF00", font = ctk.CTkFont(family = "Consolas", size = 12),)
+    tb.pack(padx = 15, pady = (5, 15))
+
+    def load_date_records(selected_date):
+        tb.delete("1.0", "end")
+        records = database.get_events_by_date(selected_date)
+        if not records:
+            tb.insert("end", f"No scan events found for {selected_date} ({len(records)} events) ---\n",)  
+            return          
+        for f, score, status, t in records:
+            tb.insert("end", f"[{t}] {status} (Score {score}) -> {f}\n")
+
+    date_menu = ctk.CTkOptionMenu(top_frame, values = available_dates, command = load_date_records, fg_color = "#6C4BA6", button_color = "#533785", dropdown_fg_color = "#342842",)
+    date_menu.pack(side = "left")
+    date_menu.set(available_dates[0])
+    load_date_records(available_dates[0])
 btn2=ctk.CTkButton(frame,text="simulate test",corner_radius=32,height=30, width=50,fg_color="#6C4BA6",command=start_simulation)
 btn1.place(x=60, y=95, anchor='center')
 btn2.place(x=60, y=50, anchor='center')

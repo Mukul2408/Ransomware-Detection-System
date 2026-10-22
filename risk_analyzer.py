@@ -84,7 +84,8 @@ def analyze_entropy(file, prev_file = None):
                 flag2 = 1
             else:
                 flag2 = 0
-           
+
+        file_entropies[file] = E           
         return flag2
 
 

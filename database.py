@@ -26,6 +26,16 @@ def get_recent_events(limit=50):
                         "ORDER BY id DESC LIMIT ?", (limit,)).fetchall()
     conn.close()
     return rows
+def get_dates():
+    conn = connect()
+    rows = conn.execute("SELECT DISTINCT substr(time, 1, 10) FROM events ORDER BY time DESC").fetchall()
+    conn.close()
+    return [r[0] for r in rows if r[0]]
+def get_events_by_date(date_str):
+    conn = connect()
+    rows = conn.execute("SELECT file, risk_score, status, time FROM events WHERE time LIKE ? ORDER BY id DESC", (f"{date_str}%",),).fetchall()
+    conn.close()
+    return rows
 def clear_events():
     conn = connect()
     conn.execute("DELETE FROM events")
