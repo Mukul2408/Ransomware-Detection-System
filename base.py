@@ -11,13 +11,31 @@ import database
 from datetime import datetime
 sfolder = None
 observer=None
+watcher_lock = threading.Lock()
+demo_running = False
+row_widgets = []
+
+def restart_watcher(folder):
+    global observer 
+    with watcher_lock:
+        watcher.stop_watcher(observer)
+        observer = watcher.start_watcher(folder)
+
+def stop_current_watcher():
+    global observer
+    with watcher_lock:
+        watcher.stop_watcher(observer)
+        observer = None
+
 def selfol():
     global sfolder,observer
     folder=filedialog.askdirectory()
     if folder:
         sfolder=folder
-        watcher.stop_watcher(observer)
-        observer=watcher.start_watcher(folder)
+        sfolder = folder
+        restart_watcher(folder)
+        switch.select()
+
 root=ctk.CTk()
 root.geometry("800x500")
 root.resizable(False,False)
@@ -28,14 +46,21 @@ frame=ctk.CTkFrame(root,width=700,height=180,corner_radius=15,fg_color="#342842"
 frame.place(x=50,y=290)
 btn1=ctk.CTkButton(frame,text="select folder",corner_radius=32,height=30, width=50,fg_color="#6C4BA6",command=selfol)
 def run_demo():
-    global observer, sfolder
-    target_folder = sfolder if sfolder else simulator.TEST_DIR
-    simulator.setup(target_folder)
-    watcher.stop_watcher(observer)
-    observer= watcher.start_watcher(target_folder)
-    time.sleep(2)
-    simulator.attack(target_folder)
+    global demo_running
+    try:
+        target_folder = sfolder if sfolder else simulator.TEST_DIR
+        stop_current_watcher()
+        simulator.setup(target_folder)
+        restart_watcher(target_folder)
+        time.sleep(2)
+        simulator.attack(target_folder)
+    finally:
+        demo_running = False
 def start_simulation():
+    global demo_running
+    if demo_running:
+        return
+    demo_running = True
     threading.Thread(target=run_demo, daemon=True).start()
 def open_history():
     win = ctk.CTkToplevel(root)
@@ -61,14 +86,17 @@ def open_history():
         records = database.get_events_by_date(selected_date)
         if not records:
             tb.insert("end", f"No scan events found for {selected_date} ({len(records)} events) ---\n",)  
-            return          
+            return  
+        lines = []        
         for f, score, status, t in records:
-            tb.insert("end", f"[{t}] {status} (Score {score}) -> {f}\n")
+            lines.append(f"[{t}] {status} (Score {score}) -> {f}\n")
+        tb.insert("end", "".join(lines))
 
     date_menu = ctk.CTkOptionMenu(top_frame, values = available_dates, command = load_date_records, fg_color = "#6C4BA6", button_color = "#533785", dropdown_fg_color = "#342842",)
     date_menu.pack(side = "left")
     date_menu.set(available_dates[0])
     load_date_records(available_dates[0])
+
 btn2=ctk.CTkButton(frame,text="simulate test",corner_radius=32,height=30, width=50,fg_color="#6C4BA6",command=start_simulation)
 btn1.place(x=60, y=95, anchor='center')
 btn2.place(x=60, y=50, anchor='center')
@@ -77,6 +105,16 @@ btn3=ctk.CTkButton(root,text="",corner_radius=32,image=ctk.CTkImage(img),height=
 btn3.place(x=780, y=20, anchor='center')
 lable=ctk.CTkLabel(root,text="Profile",fg_color='transparent')
 lable.place(x=779, y=44, anchor='center')
+
+def toggle_scanner():
+    if switch.get() == 1:
+        if sfolder:
+            restart_watcher(sfolder)
+        else:
+            switch.deselect()
+    else:
+        stop_current_watcher()
+
 switch=ctk.CTkSwitch(frame,text='scanner')
 switch.place(x=350,y=110, anchor='center',)
 switch.select()
@@ -92,12 +130,19 @@ lable3.place(relx=0.5,y=30,anchor='center')
 img2=Image.open('safe.png')
 lable4=ctk.CTkLabel(root,text='',image=ctk.CTkImage(img2,size=(200,200)),fg_color='transparent')
 lable4.place(x=597,y=130,anchor='center')
+
 def check_queue():
     while not shared.events.empty():
         kind , file, state = shared.events.get()
         message=f"<{time.strftime("%H:%M:%S")}> {kind}, {os.path.basename(file)}"
         val=ctk.CTkLabel(entry,text=message,text_color="#FFFF00")
         val.pack(anchor='w')
+        row_widgets.append(val)
+        if len(row_widgets) > 100:
+            oldest = row_widgets.pop(0)
+            oldest.destroy()
+        entry.update_idletasks()
+        entry._parent_canvas.yview_moveto(1.0)
         lable3.configure(text=f"STATUS: \n{state}")
         if state == "Confirmed Threat":
             score_val = 2

@@ -23,9 +23,11 @@ class Handler(FileSystemEventHandler):
     def on_deleted(self, event):
         if event.is_directory:
             return
-        state=risk_analyzer.process_event(event.src_path)
+        state=risk_analyzer.process_event(event.src_path, is_deleted = True)
         shared.events.put(("File Deleted", event.src_path,state))
 def start_watcher(folder):
+    risk_analyzer.reset()
+    risk_analyzer.scan_baseline(folder)
     obs=Observer()
     obs.schedule(Handler(),folder,recursive=True)
     obs.start()

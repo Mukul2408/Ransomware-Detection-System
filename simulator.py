@@ -42,7 +42,6 @@ def setup(folder = None):
 
 
 def _retry(action, tries=10, wait=0.2):
-    """Run action(); if Windows says the file is busy, wait and try again."""
     for _ in range(tries):
         try:
             action()
@@ -68,21 +67,24 @@ def attack(folder = None):
                 f.write(os.urandom(FILE_SIZE))
 
         _retry(scramble)
+        time.sleep(0.05)
         if not _retry(lambda: os.rename(path, path + ".locked")):
             print(f"[attack] could not rename {name} (file busy)")
         time.sleep(ATTACK_DELAY)
     print("[attack] done")
 
 
-def cleanup():
-    _check_safe()
-    for name in _sim_file():
-        _retry(lambda n=name: os.remove(os.path.join(TEST_DIR, n)))
-    _retry(lambda: os.remove(os.path.join(TEST_DIR, MARKER)))
-    try:
-        os.rmdir(TEST_DIR)
-    except OSError:
-        pass
+def cleanup(folder = None):
+    target = folder or TEST_DIR
+    _check_safe(target)
+    for name in _sim_file(target):
+        _retry(lambda n=name: os.remove(os.path.join(target, n)))
+    _retry(lambda: os.remove(os.path.join(target, MARKER)))
+    if target == TEST_DIR:
+        try:
+            os.rmdir(target)
+        except OSError:
+            pass
     print("[cleanup] test folder cleaned")
 
 
