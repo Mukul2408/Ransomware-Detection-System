@@ -100,8 +100,8 @@ def analyze_entropy(file, prev_file = None):
 def reset():
     global timestamps, max_risk_score
     timestamps = []
-    max_risk_scores = 0
-    file_entropies.clear()
+    max_risk_score = 0
+    file_entropies.clear()  
 
 def scan_baseline(folder):
     for root_dir, dirs, files in os.walk(folder):

@@ -54,7 +54,15 @@ def run_demo():
         restart_watcher(target_folder)
         time.sleep(2)
         simulator.attack(target_folder)
+        time.sleep(3)
     finally:
+        try:
+            stop_current_watcher()
+            simulator.cleanup(target_folder)
+            if sfolder:
+                restart_watcher(sfolder)
+        except(Exception, SystemExit) as e:
+            print("Cleanup Failed:", e)
         demo_running = False
 def start_simulation():
     global demo_running
@@ -150,9 +158,12 @@ def check_queue():
             score_val = 1
         else:
             score_val = 0
-        database.log_event(file, score_val, state)
-        with open("logs.log", "a", encoding="utf-8") as f:
-            f.write(f"<{time.strftime("%H:%M:%S")}> ,{kind}, {file}\n")
+        try:
+            database.log_event(file, score_val, state)
+            with open("logs.log", "a", encoding="utf-8") as f:
+                f.write(f"<{time.strftime("%H:%M:%S")}> ,{kind}, {file}\n")
+        except Exception as e:
+            print("Logging failed:",e)
     root.after(100, check_queue)
 def on_close():
     global observer
