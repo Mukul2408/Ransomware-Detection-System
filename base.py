@@ -123,7 +123,7 @@ def toggle_scanner():
     else:
         stop_current_watcher()
 
-switch=ctk.CTkSwitch(frame,text='scanner')
+switch=ctk.CTkSwitch(frame,text='scanner', command = toggle_scanner)
 switch.place(x=350,y=110, anchor='center',)
 switch.select()
 btn4=ctk.CTkButton(frame,text="Scan History",corner_radius=32,height=30, width=50,fg_color="#6C4BA6")
