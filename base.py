@@ -8,6 +8,7 @@ import threading
 import time
 import os
 import database
+import risk_analyzer
 from datetime import datetime
 sfolder = None
 observer=None
@@ -116,12 +117,15 @@ lable.place(x=779, y=44, anchor='center')
 
 def toggle_scanner():
     if switch.get() == 1:
+        shared.scanner_active = True
+        risk_analyzer.reset()
         if sfolder:
-            restart_watcher(sfolder)
-        else:
-            switch.deselect()
+            risk_analyzer.scan_baseline(sfolder)
+        lable3.configure(text = "STATUS: \nNormal")
     else:
-        stop_current_watcher()
+        shared.scanner_active = False
+        risk_analyzer.reset()
+        lable3.configure(text = "STATUS: \nDisabled")
 
 switch=ctk.CTkSwitch(frame,text='scanner', command = toggle_scanner)
 switch.place(x=350,y=110, anchor='center',)
@@ -151,19 +155,22 @@ def check_queue():
             oldest.destroy()
         entry.update_idletasks()
         entry._parent_canvas.yview_moveto(1.0)
-        lable3.configure(text=f"STATUS: \n{state}")
-        if state == "Confirmed Threat":
-            score_val = 2
-        elif state == "Suspicious":
-            score_val = 1
+        if state == "Disabled":
+            lable3.configure(text = f"STATUS: \nDisabled")
         else:
-            score_val = 0
-        try:
-            database.log_event(file, score_val, state)
-            with open("logs.log", "a", encoding="utf-8") as f:
-                f.write(f"<{time.strftime("%H:%M:%S")}> ,{kind}, {file}\n")
-        except Exception as e:
-            print("Logging failed:",e)
+            lable3.configure(text=f"STATUS: \n{state}")
+            if state == "Confirmed Threat":
+                score_val = 2
+            elif state == "Suspicious":
+                score_val = 1
+            else:
+                score_val = 0
+            try:
+                database.log_event(file, score_val, state)
+                with open("logs.log", "a", encoding="utf-8") as f:
+                    f.write(f"<{time.strftime("%H:%M:%S")}> ,{kind}, {file}\n")
+            except Exception as e:
+                print("Logging failed:",e)
     root.after(100, check_queue)
 def on_close():
     global observer
